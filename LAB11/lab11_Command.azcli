@@ -1,0 +1,20 @@
+## Azure Key Vault 생성
+KEYVAULTNAME='[KEY_VAULT_NAME]' 
+LOGIN='sqlUser' 
+PASSWORD='Pa55w.rd1234' 
+az keyvault create --name $KEYVAULTNAME -l eastus -g 03_templateRg --enabled-for-template-deployment true
+
+
+# Key Vault에 비밀 생성
+az keyvault secret set --vault-name $KEYVAULTNAME --name "sqlServerAdminLogin" --value $LOGIN
+az keyvault secret set --vault-name $KEYVAULTNAME --name "sqlServerAdminPassword" --value $PASSWORD
+
+
+# Azure Key Vault의 리소스 ID 확인
+az keyvault show --name $KEYVAULTNAME --query id --output tsv
+
+
+# Bicep 파일로 SQL Database 배포
+az deployment group create -n bicepDeploy -g 03_templateRg \
+  -f main.bicep \
+  -p main.parameters.json

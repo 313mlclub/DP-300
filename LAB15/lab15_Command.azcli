@@ -1,0 +1,28 @@
+# 스토리지 계정 만들기
+STORAGE_NAME="STORAGE_ACCOUNT_NAME"
+az storage account create -n $STORAGE_NAME \
+  -g "02_sqlDbRg" --kind StorageV2 -l eastus
+
+
+# 스토리지 계정 키 확인
+STORAGE_KEY=$(az storage account keys list -g 02_sqlDbRg -n $STORAGE_NAME --query [0].value -o tsv)
+echo $STORAGE_KEY
+
+
+# 백업용 스토리지 컨테이너 만들기
+az storage container create --name "backups" \
+  --account-name $STORAGE_NAME --account-key $STORAGE_KEY \
+  --fail-on-exist
+
+
+# 백업용 스토리지 컨테이너 확인
+az storage container list --account-name $STORAGE_NAME --account-key $STORAGE_KEY
+
+
+# 공유 액세스 서명 만들기
+az storage container generate-sas -n "backups" --account-name $STORAGE_NAME \
+  --account-key $STORAGE_KEY --permissions "rwdl" --expiry "date_in_the_future" -o tsv
+
+
+# 백업 파일 확인
+az storage blob list -c "backups" --account-name $STORAGE_NAME --account-key $STORAGE_KEY --output table
